@@ -83,18 +83,27 @@ if __name__ == '__main__':
     while dfwrapper.get_available_space(pen_drive_fsystem) > threshold:
         diskfill.diskfill(1)
 
-    while True:
-        print('*'*20)
-        print('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.today()))
-        print('available space on {0}: {1}GB'.format(pen_drive_fsystem, dfwrapper.get_available_space(pen_drive_fsystem)))
-        print('*'*20)
-        for file in allfiles:
-            if os.path.isfile(file['file']):
-                file['exists'] = 'not-deleted'
-            else:
-                file['exists'] = 'deleted'
-            print('{0:<30}{1:<30}{2:<30}'.format(file['file'], file['uploadstat'], file['exists']))
-        time.sleep(args.loopdelay if args.loopdelay else print_loop_delay)
+    # TODO make this configurable
+    time.sleep(300)  # wait for clean up to finish
+    # while True:
+    #     print('*'*20)
+    #     print('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.today()))
+    #     print('available space on {0}: {1}GB'.format(pen_drive_fsystem, dfwrapper.get_available_space(pen_drive_fsystem)))
+    #     print('*'*20)
+    #     for file in allfiles:
+    #         if os.path.isfile(file['file']):
+    #             file['exists'] = 'not-deleted'
+    #         else:
+    #             file['exists'] = 'deleted'
+    #         print('{0:<30}{1:<30}{2:<30}'.format(file['file'], file['uploadstat'], file['exists']))
+    #     time.sleep(args.loopdelay if args.loopdelay else print_loop_delay)
+
+    for file in allfiles:
+        if os.path.isfile(file['file']):
+            file['exists'] = 'not-deleted'
+        else:
+            file['exists'] = 'deleted'
+    print(allfiles)
 
 
 
