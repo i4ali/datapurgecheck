@@ -38,11 +38,13 @@ if __name__ == '__main__':
     coban_video_path = '/media/ubuntu/USB/cobanvideos'  # default cobanvideos path
     pen_drive_fsystem = '/dev/sdb1'  # default pen drive file system
     print_loop_delay = 5  # default loop delay
+    threshold = 25
 
     # command line arguments parser
     parser = ArgumentParser(description='Data Purge Checking Program')
     parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder", type=str, action="store")
     parser.add_argument("-d", "--loopdelay", help="Delay between loops", type=int, action="store")
+    parser.add_argument("-t", "--threshold", help="MHDD Space Threshold", type=int, action="store")
     parser.add_argument("-o", "--logfile",
                         help='Filename for the log file(including ext)',
                         metavar="FILE", action="store")
