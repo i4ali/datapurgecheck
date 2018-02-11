@@ -1,12 +1,25 @@
 #!/usr/bin/python3
+import logging
 import os
 import time
-import datetime
 import dfwrapper
 from argparse import ArgumentParser
-import logging
 import sys
 import diskfill
+
+logger = logging.getLogger('main')
+
+
+def check_file_exist(files, directory):
+    logger.info("checking if files {0} exist in {1}".format(files, directory))
+    logger.info("changing working directory to {0}".format(directory))
+    os.chdir(directory)
+    for f in files:
+        if os.path.isfile(f['file']):
+            f['exists'] = 'not-deleted'
+        else:
+            f['exists'] = 'deleted'
+    return files
 
 
 def get_uploaded_files(directory):
@@ -17,6 +30,7 @@ def get_uploaded_files(directory):
     :return list of uploaded files:
     """
     # get filename(without ext) of the files that are uploaded
+    logger.info("getting uploaded files from {0}".format(directory))
     _uploadedfilenames = []
     _uploadedfiles = []
     for f in os.listdir(directory):
@@ -32,6 +46,7 @@ def get_uploaded_files(directory):
 
 
 def get_notuploaded_files(directory, uploaded_files):
+    logger.info("getting not uploaded files from {0}".format(directory))
     _notuploadedfiles = []
     for f in os.listdir(directory):
         if os.path.isdir(f):
@@ -42,12 +57,25 @@ def get_notuploaded_files(directory, uploaded_files):
 
 
 if __name__ == '__main__':
-
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('datapurge.log')
+    fh.setLevel(logging.DEBUG)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s,%(lineno)d - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
     # command line arguments parser
     parser = ArgumentParser(description='Data Purge Checking Program')
     parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder", type=str, action="store")
     parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system", type=str, action="store")
-    parser.add_argument("-d", "--loopdelay", help="Delay between loops", type=int, action="store")
+    parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging", type=int, action="store")
     parser.add_argument("-dev", "--development", help="Development Mode", action="store_true")
     parser.add_argument("-t", "--threshold", help="MHDD Space Threshold", type=int, action="store")
     parser.add_argument("-o", "--logfile",
@@ -60,31 +88,26 @@ if __name__ == '__main__':
 
     coban_video_path = dev_dir if args.development else (args.cobanvideospath if args.cobanvideospath else '/media/ubuntu/USB/cobanvideos')   # default cobanvideos path
     pen_drive_fsystem = args.pendrivefilesystem if args.pendrivefilesystem else '/dev/sdb1'  # default pen drive file system
-    print_loop_delay = args.loopdelay if args.loopdelay else 5  # default loop delay
-    #TODO pick up this value from config.zip instead
+    data_purge_wait_time = args.datapurgewaittime if args.datapurgewaittime else 300  # default loop delay
+    # TODO pick up this value from config.zip instead
     threshold = args.threshold if args.threshold else 25
-
-    # logging
-    # TODO define a better logging structure
-    sys.stdout = logging.Logger(args.logfile if args.logfile else 'datapurge.log')
-
-    os.chdir(coban_video_path)
 
     # if the available space on pen drive is less than the defined threshold
     # quit the program
-    if dfwrapper.get_available_space(pen_drive_fsystem) < threshold:
-        print("Test cannot start as the available space is already less than the threshold")
-        sys.exit(1)
+    if dfwrapper.get_available_space(pen_drive_fsystem, True) <= threshold:
+        logger.error("Test cannot start as the available space is already less than the threshold!")
+        raise ValueError
 
     uploadedfiles = get_uploaded_files(coban_video_path)
     notuploadedfiles = get_notuploaded_files(coban_video_path, uploadedfiles)
     allfiles = uploadedfiles + notuploadedfiles
 
-    while dfwrapper.get_available_space(pen_drive_fsystem) > threshold:
+    while dfwrapper.get_available_space(pen_drive_fsystem, True) > threshold:
         diskfill.diskfill(1)
 
     # TODO make this configurable
-    time.sleep(300)  # wait for clean up to finish
+    logger.info("waiting for {0}secs to complete data purge".format(data_purge_wait_time))
+    time.sleep(data_purge_wait_time)  # wait for clean up to finish
     # while True:
     #     print('*'*20)
     #     print('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.today()))
@@ -98,12 +121,12 @@ if __name__ == '__main__':
     #         print('{0:<30}{1:<30}{2:<30}'.format(file['file'], file['uploadstat'], file['exists']))
     #     time.sleep(args.loopdelay if args.loopdelay else print_loop_delay)
 
-    for file in allfiles:
-        if os.path.isfile(file['file']):
-            file['exists'] = 'not-deleted'
-        else:
-            file['exists'] = 'deleted'
-    print(allfiles)
+    allfiles = check_file_exist(allfiles, coban_video_path)
+
+    with open('datapurgeresult.log', 'a') as res:
+        logger.info("writing results to file")
+        for file in allfiles:
+            res.write(str(file)+'\n')
 
 
 

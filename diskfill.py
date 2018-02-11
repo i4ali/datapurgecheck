@@ -1,8 +1,14 @@
+import logging
 import os
 from argparse import ArgumentParser
 
 
+# create logger
+logger = logging.getLogger('main.diskfill')
+
+
 def diskfill(sizeinGB=1, filename='largefile'):
+    logger.info("writing to disk - size:{0}GB, filename:{1}".format(sizeinGB, filename))
     thousandKB = 1000000  # bytes
     counter = 1
     with open(filename, 'ab') as fout:
