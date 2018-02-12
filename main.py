@@ -77,6 +77,7 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system", type=str, action="store")
     parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging", type=int, action="store")
     parser.add_argument("-dev", "--development", help="Development Mode", action="store_true")
+    parser.add_argument("-m", "--mount", help="Use Mounted on", action="store_true", default=False)
     parser.add_argument("-t", "--threshold", help="MHDD Space Threshold", type=int, action="store")
     parser.add_argument("-o", "--logfile",
                         help='Filename for the log file(including ext)',
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 
     # if the available space on pen drive is less than the defined threshold
     # quit the program
-    if dfwrapper.get_available_space(pen_drive_fsystem, True) <= threshold:
+    if dfwrapper.get_available_space(pen_drive_fsystem, args.mount) <= threshold:
         logger.error("Test cannot start as the available space is already less than the threshold!")
         raise ValueError
 
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     notuploadedfiles = get_notuploaded_files(coban_video_path, uploadedfiles)
     allfiles = uploadedfiles + notuploadedfiles
 
-    while dfwrapper.get_available_space(pen_drive_fsystem, True) > threshold:
+    while dfwrapper.get_available_space(pen_drive_fsystem, args.mount) > threshold:
         diskfill.diskfill(1)
 
     # TODO make this configurable

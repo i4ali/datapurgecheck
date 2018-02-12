@@ -11,7 +11,7 @@ def get_available_space(partition, use_mounted_on=False):
     :param partition:
     :return available space for the filesystem argument:
     """
-    logger.info("getting available space for {0}".format(partition))
+    logger.info("getting available space for {0} using 'mount on' {1} ".format(partition, use_mounted_on))
     df = subprocess.Popen(["df", "-h", "--block-size=GB"], stdout=subprocess.PIPE)
     for line in df.stdout:
         splitline = line.decode().split()
