@@ -6,19 +6,28 @@ import dfwrapper
 from argparse import ArgumentParser
 import sys
 import diskfill
+from helperutil import ChDir
 
+# TODO write unit tests
 logger = logging.getLogger('main')
+
+validextensions = ['.ok', '.l', '.v', '.log', '.mp4', '.jpg', '.c', '.d', '.ts', '.a']
 
 
 def check_file_exist(files, directory):
+    """
+
+    :param files: a list of dictionaries with filename, uploadstat info
+    :param directory: directory to scan
+    :return files: a list of dictionaries with filename, exists, uploadedstat info
+    """
     logger.info("checking if files {0} exist in {1}".format(files, directory))
-    logger.info("changing working directory to {0}".format(directory))
-    os.chdir(directory)
-    for f in files:
-        if os.path.isfile(f['file']):
-            f['exists'] = 'not-deleted'
-        else:
-            f['exists'] = 'deleted'
+    with ChDir(directory):
+        for f in files:
+            if os.path.isfile(f['file']):
+                f['exists'] = 'not-deleted'
+            else:
+                f['exists'] = 'deleted'
     return files
 
 
@@ -26,52 +35,74 @@ def get_uploaded_files(directory):
     """
     scans the directory and returns a list of files that are uploaded to the server
     this is checked by using .ok extension for a given filename
-    :param directory:
+    :param directory: directory to scan
     :return list of uploaded files:
     """
-    # get filename(without ext) of the files that are uploaded
+
     logger.info("getting uploaded files from {0}".format(directory))
-    _uploadedfilenames = []
-    _uploadedfiles = []
-    for f in os.listdir(directory):
-        filename, file_extension = os.path.splitext(f)
-        if file_extension == '.ok':
-            _uploadedfilenames.append(filename)
-    # get all files(with ext) that have the same filename AND if they were uploaded
-    for f in os.listdir(directory):
-        filename, file_extension = os.path.splitext(f)
-        if filename in _uploadedfilenames:
-            _uploadedfiles.append({'file': f, 'uploadstat': 'uploaded'})
-    return _uploadedfiles
+    with ChDir(directory):
+        _uploadedfilenames = []
+        uploadedfiles = []
+        # get filename(without ext) of the files that are uploaded
+        for f in os.listdir(directory):
+            if os.path.isdir(f):
+                continue
+            filename, file_extension = os.path.splitext(f)
+            if file_extension == '.ok':
+                _uploadedfilenames.append(filename)
+        # get all files(with ext) that have the same filename AND if they were uploaded
+        for f in os.listdir(directory):
+            if os.path.isdir(f):
+                continue
+            filename, file_extension = os.path.splitext(f)
+            if file_extension not in validextensions:
+                filename = f
+            if filename in _uploadedfilenames:
+                uploadedfiles.append(f)
+    return uploadedfiles
 
 
 def get_notuploaded_files(directory, uploaded_files):
+    """
+
+    :param directory: directory to scan
+    :param uploaded_files: list of uploaded files
+    :return notuploadedfiles: list of not uploaded files
+    """
     logger.info("getting not uploaded files from {0}".format(directory))
-    _notuploadedfiles = []
-    for f in os.listdir(directory):
-        if os.path.isdir(f):
-            continue
-        if f not in uploaded_files:
-            _notuploadedfiles.append({'file': f, 'uploadstat': 'not-uploaded'})
-    return _notuploadedfiles
+    with ChDir(directory):
+        notuploadedfiles = []
+        for f in os.listdir(directory):
+            if os.path.isdir(f):
+                continue
+            if f not in uploaded_files:
+                notuploadedfiles.append(f)
+    return notuploadedfiles
 
 
 if __name__ == '__main__':
+    """
+    example run options
+    main.py -t 243 -dev -d 5 -f '/vagrant' -m
+    main.py -t 25 -d 1000
+    """
+    # TODO rethink if filehandler is required
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('datapurge.log')
-    fh.setLevel(logging.DEBUG)
+    # fh = logging.FileHandler('datapurge.log')
+    # fh.setLevel(logging.DEBUG)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
+    ch.setLevel(logging.DEBUG)
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s,%(lineno)d - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
+    # fh.setFormatter(formatter)
     ch.setFormatter(formatter)
     # add the handlers to the logger
-    logger.addHandler(fh)
+    # logger.addHandler(fh)
     logger.addHandler(ch)
     # command line arguments parser
+    # TODO show default values when -h is called
     parser = ArgumentParser(description='Data Purge Checking Program')
     parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder", type=str, action="store")
     parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system", type=str, action="store")
@@ -79,19 +110,23 @@ if __name__ == '__main__':
     parser.add_argument("-dev", "--development", help="Development Mode", action="store_true")
     parser.add_argument("-m", "--mount", help="Use Mounted on", action="store_true", default=False)
     parser.add_argument("-t", "--threshold", help="MHDD Space Threshold", type=int, action="store")
-    parser.add_argument("-o", "--logfile",
-                        help='Filename for the log file(including ext)',
+    parser.add_argument("-o", "--csvfile",
+                        help='Filename for the results file(including ext)',
                         metavar="FILE", action="store")
+    # TODO rethink the Use mounted on option and how to handle that properly
     args = parser.parse_args()
 
     # development directories
-    dev_dir = '/vagrant/development/datapurgecheck'
+    dev_dir = '/vagrant/development/datapurgecheck/data'
 
     coban_video_path = dev_dir if args.development else (args.cobanvideospath if args.cobanvideospath else '/media/ubuntu/USB/cobanvideos')   # default cobanvideos path
     pen_drive_fsystem = args.pendrivefilesystem if args.pendrivefilesystem else '/dev/sdb1'  # default pen drive file system
     data_purge_wait_time = args.datapurgewaittime if args.datapurgewaittime else 300  # default loop delay
     # TODO pick up this value from config.zip instead
     threshold = args.threshold if args.threshold else 25
+    csv_file = args.csvfile if args.csvfile else 'datapurgeresult.csv'
+
+    logger.debug("arguments provided - {0} ".format(sys.argv))
 
     # if the available space on pen drive is less than the defined threshold
     # quit the program
@@ -100,34 +135,34 @@ if __name__ == '__main__':
         raise ValueError
 
     uploadedfiles = get_uploaded_files(coban_video_path)
+    logger.debug("uploaded files - {0}".format(uploadedfiles))
     notuploadedfiles = get_notuploaded_files(coban_video_path, uploadedfiles)
-    allfiles = uploadedfiles + notuploadedfiles
+    logger.debug("notuploaded files - {0}".format(notuploadedfiles))
+
+    common_files = [x for x in uploadedfiles if x in notuploadedfiles]
+    assert not common_files   # make sure no common files in uploaded and not-uploaded files exist
+    allfileswstatus = []
+    for f in uploadedfiles:
+        allfileswstatus.append({'file': f, 'uploadstat': 'uploaded'})
+    for f in notuploadedfiles:
+        allfileswstatus.append({'file': f, 'uploadstat': 'not-uploaded'})
 
     while dfwrapper.get_available_space(pen_drive_fsystem, args.mount) > threshold:
-        diskfill.diskfill(1)
+        diskfill.diskfill(1, os.path.join(coban_video_path, 'largefile'))
 
-    # TODO make this configurable
     logger.info("waiting for {0}secs to complete data purge".format(data_purge_wait_time))
     time.sleep(data_purge_wait_time)  # wait for clean up to finish
-    # while True:
-    #     print('*'*20)
-    #     print('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.today()))
-    #     print('available space on {0}: {1}GB'.format(pen_drive_fsystem, dfwrapper.get_available_space(pen_drive_fsystem)))
-    #     print('*'*20)
-    #     for file in allfiles:
-    #         if os.path.isfile(file['file']):
-    #             file['exists'] = 'not-deleted'
-    #         else:
-    #             file['exists'] = 'deleted'
-    #         print('{0:<30}{1:<30}{2:<30}'.format(file['file'], file['uploadstat'], file['exists']))
-    #     time.sleep(args.loopdelay if args.loopdelay else print_loop_delay)
 
-    allfiles = check_file_exist(allfiles, coban_video_path)
+    allfileswstatus = check_file_exist(allfileswstatus, coban_video_path)
 
-    with open('datapurgeresult.log', 'a') as res:
-        logger.info("writing results to file")
-        for file in allfiles:
-            res.write(str(file)+'\n')
+    allfileswstatus = sorted(allfileswstatus, key=lambda k: k['file'])    # sort the list by filenames for easier read
+
+    with open(csv_file, 'a') as res:
+        logger.info("writing results to file {0}".format(csv_file))
+        for file in allfileswstatus:
+            res.write(str(file['file'])+',')
+            res.write(str(file['uploadstat'])+',')
+            res.write(str(file['exists'])+'\n')
 
 
 
