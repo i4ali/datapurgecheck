@@ -2,11 +2,10 @@
 import logging
 import os
 import time
-import dfwrapper
+from utilities import dfwrapper, diskfill
 from argparse import ArgumentParser
 import sys
-import diskfill
-from helperutil import ChDir
+from utilities.helperutil import ChDir
 
 # TODO write unit tests
 logger = logging.getLogger('main')

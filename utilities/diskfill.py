@@ -1,8 +1,6 @@
 import logging
 import os
 from argparse import ArgumentParser
-from helperutil import ChDir
-
 
 # create logger
 logger = logging.getLogger('main.diskfill')
