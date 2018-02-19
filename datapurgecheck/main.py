@@ -13,9 +13,8 @@ logger = logging.getLogger('main')
 validextensions = ['.ok', '.l', '.v', '.log', '.mp4', '.jpg', '.c', '.d', '.ts', '.a']
 
 
-def check_file_exist(files, directory):
+def check_files_exist(files, directory):
     """
-
     :param files: a list of dictionaries with filename, uploadstat info
     :param directory: directory to scan
     :return files: a list of dictionaries with filename, exists, uploadedstat info
@@ -82,8 +81,8 @@ def get_notuploaded_files(directory, uploaded_files):
 if __name__ == '__main__':
     """
     example run options
-    main.py -t 243 -dev -d 5 -f '/vagrant' -m
     main.py -t 25 -d 1000
+    main.py -p '/vagrant/development/datapurgecheck/data' -t 249 -d 5 -f '/vagrant' -m 'Mounted on'
     """
     # TODO rethink if filehandler is required
     logger.setLevel(logging.DEBUG)
@@ -102,40 +101,37 @@ if __name__ == '__main__':
     logger.addHandler(ch)
     # command line arguments parser
     # TODO show default values when -h is called
-    parser = ArgumentParser(description='Data Purge Checking Program')
-    parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder", type=str, action="store")
-    parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system", type=str, action="store")
-    parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging", type=int, action="store")
-    parser.add_argument("-dev", "--development", help="Development Mode", action="store_true")
-    parser.add_argument("-m", "--mount", help="Use Mounted on", action="store_true", default=False)
-    parser.add_argument("-t", "--threshold", help="MHDD Space Threshold", type=int, action="store")
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder", type=str, action="store",
+                        default='/media/ubuntu/USB/cobanvideos')
+    parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system", type=str, action="store",
+                        default='/dev/sdb1')
+    parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging", type=int, action="store",
+                        default=300)
+    parser.add_argument("-m", "--mount", help="Use filesystem device path or mounted on path", action="store", type=str,
+                        choices=['Filesystem', 'Mounted on'], default='Filesystem')
+    parser.add_argument("-t", "--threshold", help="MHDD Space Threshold", type=int, action="store",
+                        default=25)
     parser.add_argument("-o", "--csvfile",
                         help='Filename for the results file(including ext)',
-                        metavar="FILE", action="store")
+                        metavar="FILE", action="store", default='datapurgeresult.csv')
     # TODO rethink the Use mounted on option and how to handle that properly
     args = parser.parse_args()
 
     # development directories
     dev_dir = '/vagrant/development/datapurgecheck/data'
 
-    coban_video_path = dev_dir if args.development else (args.cobanvideospath if args.cobanvideospath else '/media/ubuntu/USB/cobanvideos')   # default cobanvideos path
-    pen_drive_fsystem = args.pendrivefilesystem if args.pendrivefilesystem else '/dev/sdb1'  # default pen drive file system
-    data_purge_wait_time = args.datapurgewaittime if args.datapurgewaittime else 300  # default loop delay
-    # TODO pick up this value from config.zip instead
-    threshold = args.threshold if args.threshold else 25
-    csv_file = args.csvfile if args.csvfile else 'datapurgeresult.csv'
-
     logger.debug("arguments provided - {0} ".format(sys.argv))
 
     # if the available space on pen drive is less than the defined threshold
     # quit the program
-    if dfwrapper.get_available_space(pen_drive_fsystem, args.mount) <= threshold:
+    if dfwrapper.get_available_space(args.pendrivefilesystem, args.mount) <= args.threshold:
         logger.error("Test cannot start as the available space is already less than the threshold!")
         raise ValueError
 
-    uploadedfiles = get_uploaded_files(coban_video_path)
+    uploadedfiles = get_uploaded_files(args.cobanvideospath)
     logger.debug("uploaded files - {0}".format(uploadedfiles))
-    notuploadedfiles = get_notuploaded_files(coban_video_path, uploadedfiles)
+    notuploadedfiles = get_notuploaded_files(args.cobanvideospath, uploadedfiles)
     logger.debug("notuploaded files - {0}".format(notuploadedfiles))
 
     common_files = [x for x in uploadedfiles if x in notuploadedfiles]
@@ -146,18 +142,18 @@ if __name__ == '__main__':
     for f in notuploadedfiles:
         allfileswstatus.append({'file': f, 'uploadstat': 'not-uploaded'})
 
-    while dfwrapper.get_available_space(pen_drive_fsystem, args.mount) > threshold:
-        diskfill.diskfill(1, os.path.join(coban_video_path, 'largefile'))
+    while dfwrapper.get_available_space(args.pendrivefilesystem, args.mount) > args.threshold:
+        diskfill.diskfill(1, os.path.join(args.cobanvideospath, 'largefile'))
 
-    logger.info("waiting for {0}secs to complete data purge".format(data_purge_wait_time))
-    time.sleep(data_purge_wait_time)  # wait for clean up to finish
+    logger.info("waiting for {0}secs to complete data purge".format(args.datapurgewaittime))
+    time.sleep(args.datapurgewaittime)  # wait for clean up to finish
 
-    allfileswstatus = check_file_exist(allfileswstatus, coban_video_path)
+    allfileswstatus = check_files_exist(allfileswstatus, args.cobanvideospath)
 
     allfileswstatus = sorted(allfileswstatus, key=lambda k: k['file'])    # sort the list by filenames for easier read
 
-    with open(csv_file, 'a') as res:
-        logger.info("writing results to file {0}".format(csv_file))
+    with open(args.csvfile, 'a') as res:
+        logger.info("writing results to file {0}".format(args.csvfile))
         for file in allfileswstatus:
             res.write(str(file['file'])+',')
             res.write(str(file['uploadstat'])+',')
