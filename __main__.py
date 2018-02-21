@@ -14,7 +14,9 @@ logger = logging.getLogger('main')
 validextensions = ['.ok', '.l', '.v', '.log', '.mp4', '.jpg', '.c', '.d', '.ts', '.a']
 
 
+
 def check_file_exist(file, directory):
+    logger.debug("checking if file {0} exists in {1} directory".format(file, directory))
     with ChDir(directory):
         if os.path.isfile(file):
             return True
@@ -74,8 +76,8 @@ def get_notuploaded_files(directory, uploaded_files):
 if __name__ == '__main__':
     """
     example run options
-    main.py -t 25 -d 1000
-    main.py -p '/vagrant/development/datapurgecheck/data' -t 249 -d 5 -f '/vagrant' -m 'Mounted on'
+    python3 datapurgecheck -p '/vagrant/development/datapurgecheck/datapurgecheck/data' -t 249 -d 5 -f '/vagrant' -m 'Mounted on'
+    python3 datapurgecheck -h
     """
     # TODO rethink if filehandler is required
     logger.setLevel(logging.DEBUG)
@@ -93,7 +95,6 @@ if __name__ == '__main__':
     # logger.addHandler(fh)
     logger.addHandler(ch)
     # command line arguments parser
-    # TODO show default values when -h is called
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder (default: %(default)s)", type=str, action="store",
                         default='/media/ubuntu/USB/cobanvideos')
@@ -136,9 +137,8 @@ if __name__ == '__main__':
         diskfill.diskfill(1, os.path.join(args.cobanvideospath, 'largefile'))
 
     logger.info("waiting for {0}secs to complete data purge".format(args.datapurgewaittime))
-    time.sleep(args.datapurgewaittime)  # wait for clean up to finish
+    time.sleep(args.datapurgewaittime)  # wait for purging to finish
 
-    # allfileswstatus = check_files_exist(allfileswstatus, args.cobanvideospath)
     for file in allfileswstatus:
         if check_file_exist(file['file'], args.cobanvideospath):
             file['exists'] = 'not-deleted'
