@@ -14,21 +14,12 @@ logger = logging.getLogger('main')
 validextensions = ['.ok', '.l', '.v', '.log', '.mp4', '.jpg', '.c', '.d', '.ts', '.a']
 
 
-def check_files_exist(files, directory):
-    """
-    :param files: a list of dictionaries with filename, uploadstat info
-    :param directory: directory to scan
-    :return files: a list of dictionaries with filename, exists, uploadedstat info
-    """
-    logger.info("checking if files {0} exist in {1}".format(files, directory))
+def check_file_exist(file, directory):
     with ChDir(directory):
-        for f in files:
-            if os.path.isfile(f['file']):
-                f['exists'] = 'not-deleted'
-            else:
-                f['exists'] = 'deleted'
-    return files
-
+        if os.path.isfile(file):
+            return True
+        else:
+            return False
 
 def get_uploaded_files(directory):
     """
@@ -103,18 +94,18 @@ if __name__ == '__main__':
     # command line arguments parser
     # TODO show default values when -h is called
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder", type=str, action="store",
+    parser.add_argument("-p", "--cobanvideospath", help="Path to cobanvideos folder (default: %(default)s)", type=str, action="store",
                         default='/media/ubuntu/USB/cobanvideos')
-    parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system", type=str, action="store",
+    parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system (default: %(default)s)", type=str, action="store",
                         default='/dev/sdb1')
-    parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging", type=int, action="store",
+    parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging (default: %(default)s)", type=int, action="store",
                         default=300)
-    parser.add_argument("-m", "--mount", help="Use filesystem device path or mounted on path", action="store", type=str,
+    parser.add_argument("-m", "--mount", help="Use filesystem device path or mounted on path (default: %(default)s)", action="store", type=str,
                         choices=['Filesystem', 'Mounted on'], default='Filesystem')
-    parser.add_argument("-t", "--threshold", help="MHDD Space Threshold", type=int, action="store",
+    parser.add_argument("-t", "--threshold", help="MHDD Space Threshold (default: %(default)s)", type=int, action="store",
                         default=25)
     parser.add_argument("-o", "--csvfile",
-                        help='Filename for the results file(including ext)',
+                        help='Filename for the results file(including ext (default: %(default)s))',
                         metavar="FILE", action="store", default='datapurgeresult.csv')
     # TODO rethink the Use mounted on option and how to handle that properly
     args = parser.parse_args()
@@ -146,7 +137,12 @@ if __name__ == '__main__':
     logger.info("waiting for {0}secs to complete data purge".format(args.datapurgewaittime))
     time.sleep(args.datapurgewaittime)  # wait for clean up to finish
 
-    allfileswstatus = check_files_exist(allfileswstatus, args.cobanvideospath)
+    # allfileswstatus = check_files_exist(allfileswstatus, args.cobanvideospath)
+    for file in allfileswstatus:
+        if check_file_exist(file['file'], args.cobanvideospath):
+            file['exists'] = 'not-deleted'
+        else:
+            file['exists'] = 'deleted'
 
     allfileswstatus = sorted(allfileswstatus, key=lambda k: k['file'])    # sort the list by filenames for easier read
 
