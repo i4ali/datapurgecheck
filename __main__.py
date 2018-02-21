@@ -21,6 +21,7 @@ def check_file_exist(file, directory):
         else:
             return False
 
+
 def get_uploaded_files(directory):
     """
     scans the directory and returns a list of files that are uploaded to the server
