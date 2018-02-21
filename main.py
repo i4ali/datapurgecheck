@@ -2,10 +2,11 @@
 import logging
 import os
 import time
-from utilities import dfwrapper, diskfill
+from datapurgecheck.utilities import dfwrapper
+from datapurgecheck.utilities import diskfill
 from argparse import ArgumentParser
 import sys
-from utilities.helperutil import ChDir
+from datapurgecheck.utilities.helperutil import ChDir
 
 # TODO write unit tests
 logger = logging.getLogger('main')
@@ -117,9 +118,6 @@ if __name__ == '__main__':
                         metavar="FILE", action="store", default='datapurgeresult.csv')
     # TODO rethink the Use mounted on option and how to handle that properly
     args = parser.parse_args()
-
-    # development directories
-    dev_dir = '/vagrant/development/datapurgecheck/data'
 
     logger.debug("arguments provided - {0} ".format(sys.argv))
 
