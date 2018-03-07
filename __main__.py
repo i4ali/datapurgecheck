@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import logging
 import os
 import time
@@ -16,6 +17,12 @@ validextensions = ['.ok', '.l', '.v', '.log', '.mp4', '.jpg', '.c', '.d', '.ts',
 
 
 def check_file_exist(file, directory):
+    """
+    scans the directory for the file and provides the status of its existence
+    :param file: file to be checked for existence
+    :param directory: directory to be scanned
+    :return boolean: True of False
+    """
     logger.debug("checking if file {0} exists in {1} directory".format(file, directory))
     with ChDir(directory):
         if os.path.isfile(file):
@@ -31,7 +38,6 @@ def get_uploaded_files(directory):
     :param directory: directory to scan
     :return list of uploaded files:
     """
-
     logger.info("getting uploaded files from {0}".format(directory))
     with ChDir(directory):
         _uploadedfilenames = []
@@ -57,7 +63,8 @@ def get_uploaded_files(directory):
 
 def get_notuploaded_files(directory, uploaded_files):
     """
-
+    scans the directory and returns a list of files that are not-uploaded to the server
+    this is checked by using .ok extension for a given filename
     :param directory: directory to scan
     :param uploaded_files: list of uploaded files
     :return notuploadedfiles: list of not uploaded files
@@ -74,11 +81,7 @@ def get_notuploaded_files(directory, uploaded_files):
 
 
 if __name__ == '__main__':
-    """
-    example run options
-    python3 datapurgecheck -p '/vagrant/development/datapurgecheck/datapurgecheck/data' -t 249 -d 5 -f '/vagrant' -m 'Mounted on'
-    python3 datapurgecheck -h
-    """
+
     # TODO rethink if filehandler is required
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
