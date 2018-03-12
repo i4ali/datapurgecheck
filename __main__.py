@@ -1,10 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import logging
 import os
 import time
 from datapurgecheck.utilities import dfwrapper
-from datapurgecheck.utilities import diskfill
+from datapurgecheck.utilities.diskfill import DiskFill
 from argparse import ArgumentParser
 import sys
 from datapurgecheck.utilities.helperutil import ChDir
@@ -82,11 +82,10 @@ def get_notuploaded_files(directory, uploaded_files):
 
 if __name__ == '__main__':
 
-    # TODO rethink if filehandler is required
     logger.setLevel(logging.DEBUG)
     # create file handler which logs even debug messages
-    # fh = logging.FileHandler('datapurge.log')
-    # fh.setLevel(logging.DEBUG)
+    fh = logging.FileHandler('datapurge.log')
+    fh.setLevel(logging.DEBUG)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
@@ -95,7 +94,7 @@ if __name__ == '__main__':
     # fh.setFormatter(formatter)
     ch.setFormatter(formatter)
     # add the handlers to the logger
-    # logger.addHandler(fh)
+    logger.addHandler(fh)
     logger.addHandler(ch)
     # command line arguments parser
     parser = ArgumentParser(description=__doc__)
@@ -112,7 +111,8 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--csvfile",
                         help='Filename for the results file(including ext (default: %(default)s))',
                         metavar="FILE", action="store", default='datapurgeresult.csv')
-    # TODO rethink the Use mounted on option and how to handle that properly
+    parser.add_argument("-e", "--extension", help="Extension of the file to be added",
+                        type=str, action="store", default='')
     args = parser.parse_args()
 
     logger.debug("arguments provided - {0} ".format(sys.argv))
@@ -120,8 +120,9 @@ if __name__ == '__main__':
     # if the available space on pen drive is less than the defined threshold
     # quit the program
     if dfwrapper.get_available_space(args.pendrivefilesystem, args.mount) <= args.threshold:
+        #TODO rethink if this error message is needed
         logger.error("Test cannot start as the available space is already less than the threshold!")
-        raise ValueError
+        raise ValueError("Available space is less than the defined threshold")
 
     uploadedfiles = get_uploaded_files(args.cobanvideospath)
     logger.debug("uploaded files - {0}".format(uploadedfiles))
@@ -136,8 +137,12 @@ if __name__ == '__main__':
     for f in notuploadedfiles:
         allfileswstatus.append({'file': f, 'uploadstat': 'not-uploaded'})
 
+    DiskFill(1, os.path.join(args.cobanvideospath, ('largefile'+args.extension)))
+
     while dfwrapper.get_available_space(args.pendrivefilesystem, args.mount) > args.threshold:
-        diskfill.diskfill(1, os.path.join(args.cobanvideospath, 'largefile'))
+        DiskFill.diskfill()
+        DiskFill.sizewritten()
+        # diskfill.diskfill(1, os.path.join(args.cobanvideospath, ('largefile'+args.extension)))
 
     logger.info("waiting for {0}secs to complete data purge".format(args.datapurgewaittime))
     time.sleep(args.datapurgewaittime)  # wait for purging to finish

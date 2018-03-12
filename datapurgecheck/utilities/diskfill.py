@@ -6,15 +6,44 @@ from argparse import ArgumentParser
 logger = logging.getLogger('main.diskfill')
 
 
-def diskfill(sizeinGB=1, filename='largefile'):
-    logger.info("writing to disk - size:{0}GB, filename:{1}".format(sizeinGB, filename))
+class DiskFill:
     thousandKB = 1000000  # bytes
-    counter = 1
-    with open(filename, 'ab') as fout:
-        while counter < (sizeinGB*1000):
-            fout.write(os.urandom(thousandKB))
-            counter = counter+1
-    return
+
+    def __init__(self, sizeinGB, filename):
+        self.sizeinGB = sizeinGB
+        self.count = 0
+        self.filename = filename
+
+    def diskfill(self):
+        logger.info("writing to disk - size:{0}GB, filename:{1}".format(self.sizeinGB, self.filename))
+        counter = 1
+        with open(self.filename, 'ab') as fout:
+            while counter < (self.sizeinGB * 1000):
+                fout.write(os.urandom(self.thousandKB))
+                counter = counter + 1
+        self.count += 1
+        return
+
+    def sizewritten(self):
+        logger.info("size written to disk {0}GB".format(self.count*self.sizeinGB))
+        return self.count*self.sizeinGB
+
+
+# def diskfill(sizeinGB=1, filename='largefile'):
+#     """
+#     fills the working directory by adding 1GB
+#     :param sizeinGB:
+#     :param filename:
+#     :return:
+#     """
+#     logger.info("writing to disk - size:{0}GB, filename:{1}".format(sizeinGB, filename))
+#     thousandKB = 1000000  # bytes
+#     counter = 1
+#     with open(filename, 'ab') as fout:
+#         while counter < (sizeinGB*1000):
+#             fout.write(os.urandom(thousandKB))
+#             counter = counter+1
+#     return
 
 
 if __name__ == '__main__':
