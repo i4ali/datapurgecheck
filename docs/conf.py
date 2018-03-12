@@ -24,7 +24,7 @@ copyright = '2018, Imran Ali'
 author = 'Imran Ali'
 
 # The short X.Y version
-version = '0.1'
+version = ''
 # The full version, including alpha/beta/rc tags
 release = version
 

@@ -18,15 +18,15 @@ def get_available_space(partition, dev_path):
         if dev_path == 'Mounted on':
             if splitline[5] == partition:
                 available_space = int(splitline[3][:-2])
-                logger.info("Available space is {0}GB".format(available_space))
+                logger.info("available space is {0}GB".format(available_space))
                 return available_space
         elif dev_path == 'Filesystem':
             if splitline[0] == partition:
                 available_space = int(splitline[3][:-2])
-                logger.info("Available space is {0}GB".format(available_space))
+                logger.info("available space is {0}GB".format(available_space))
                 return available_space
         else:
-            raise ValueError("Unsupported device path")
+            raise ValueError("unknown device path")
 
 
 if __name__ == '__main__':

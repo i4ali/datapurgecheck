@@ -91,7 +91,7 @@ if __name__ == '__main__':
     ch.setLevel(logging.DEBUG)
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s,%(lineno)d - %(levelname)s - %(message)s')
-    # fh.setFormatter(formatter)
+    fh.setFormatter(formatter)
     ch.setFormatter(formatter)
     # add the handlers to the logger
     logger.addHandler(fh)
@@ -121,8 +121,8 @@ if __name__ == '__main__':
     # quit the program
     if dfwrapper.get_available_space(args.pendrivefilesystem, args.mount) <= args.threshold:
         #TODO rethink if this error message is needed
-        logger.error("Test cannot start as the available space is already less than the threshold!")
-        raise ValueError("Available space is less than the defined threshold")
+        logger.error("test cannot start as the available space is already less than the threshold!")
+        raise ValueError("available space is less than the defined threshold")
 
     uploadedfiles = get_uploaded_files(args.cobanvideospath)
     logger.debug("uploaded files - {0}".format(uploadedfiles))
@@ -137,12 +137,11 @@ if __name__ == '__main__':
     for f in notuploadedfiles:
         allfileswstatus.append({'file': f, 'uploadstat': 'not-uploaded'})
 
-    DiskFill(1, os.path.join(args.cobanvideospath, ('largefile'+args.extension)))
+    df = DiskFill(1, os.path.join(args.cobanvideospath, ('largefile'+args.extension)))
 
     while dfwrapper.get_available_space(args.pendrivefilesystem, args.mount) > args.threshold:
-        DiskFill.diskfill()
-        DiskFill.sizewritten()
-        # diskfill.diskfill(1, os.path.join(args.cobanvideospath, ('largefile'+args.extension)))
+        df.diskfill()
+        df.getsizewritten()
 
     logger.info("waiting for {0}secs to complete data purge".format(args.datapurgewaittime))
     time.sleep(args.datapurgewaittime)  # wait for purging to finish

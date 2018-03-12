@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to datapurgecheck's documentation
+Welcome to datapurgecheck documentation
 ==========================================
 
 Introduction
@@ -17,13 +17,34 @@ Documentation
 
 .. automodule:: datapurgecheck
 
+Installation
+************
+
+Download the latest datapurgecheck utility from the utilities folder in X->SWQA->Utilities and copy the .tar file
+into the test unit.
+
+Untar the utility using the following commands
+
+    ::
+
+     tar -xvf datapurgecheck.tar
+
 
 Usage
 *****
 
+Sample usage(s) are shown below:
+
+     ::
+
+      python3 datapurgecheck -p '/vagrant/development/datapurgecheck/datapurgecheck/data' -t 249 -d 5 -f '/vagrant' -m 'Mounted on'
+
+if you want to see all available arguments and supported features
     ::
 
-     usage: __main__.py [-h] [-p COBANVIDEOSPATH] [-f PENDRIVEFILESYSTEM]
+      python3 datapurgecheck -h
+
+      usage: __main__.py [-h] [-p COBANVIDEOSPATH] [-f PENDRIVEFILESYSTEM]
                    [-d DATAPURGEWAITTIME] [-m {Filesystem,Mounted on}]
                    [-t THRESHOLD] [-o FILE]
 
@@ -44,14 +65,6 @@ Usage
      -o FILE, --csvfile FILE
                         Filename for the results file(including ext (default:
                         datapurgeresult.csv))
-
-
-Sample usage(s) are shown below:
-
-     ::
-
-      python3 datapurgecheck -p '/vagrant/development/datapurgecheck/datapurgecheck/data' -t 249 -d 5 -f '/vagrant' -m 'Mounted on'
-      python3 datapurgecheck -h
 
 
 .. toctree::
