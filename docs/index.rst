@@ -5,7 +5,7 @@
 
 Welcome to datapurgecheck documentation
 ==========================================
-..auto
+
 Introduction
 ************
 

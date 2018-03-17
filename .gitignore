@@ -5,4 +5,7 @@ __pycache__
 *.csv
 dist
 *.egg-info
+_build
+_static_
+_templates
 
