@@ -102,17 +102,20 @@ if __name__ == '__main__':
                         default='/media/ubuntu/USB/cobanvideos')
     parser.add_argument("-f", "--pendrivefilesystem", help="Pen drive file system (default: %(default)s)", type=str, action="store",
                         default='/dev/sdb1')
-    parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging (default: %(default)s)", type=int, action="store",
+    parser.add_argument("-d", "--datapurgewaittime", help="Time to wait for data purging to complete (default: %(default)s)", type=int, action="store",
                         default=300)
-    parser.add_argument("-m", "--mount", help="Use filesystem device path or mounted on path (default: %(default)s)", action="store", type=str,
+    parser.add_argument("-m", "--mount", help="Use filesystem device path or mounted on path (default: %(default)s), run"
+                                              "'df -h to identify the field to use'", action="store", type=str,
                         choices=['Filesystem', 'Mounted on'], default='Filesystem')
     parser.add_argument("-t", "--threshold", help="MHDD Space Threshold (default: %(default)s)", type=int, action="store",
                         default=25)
     parser.add_argument("-o", "--csvfile",
                         help='Filename for the results file(including ext (default: %(default)s))',
                         metavar="FILE", action="store", default='datapurgeresult.csv')
-    parser.add_argument("-e", "--extension", help="Extension of the file to be added",
+    parser.add_argument("-e", "--extension", help="Extension of the junk file to be added",
                         type=str, action="store", default='')
+    parser.add_argument("-s", "--splitfile", help="Split the junk data file into multiple 1GB files"
+                        , action="store_true")
     args = parser.parse_args()
 
     logger.debug("arguments provided - {0} ".format(sys.argv))
@@ -137,7 +140,7 @@ if __name__ == '__main__':
     for f in notuploadedfiles:
         allfileswstatus.append({'file': f, 'uploadstat': 'not-uploaded'})
 
-    df = DiskFill(1, os.path.join(args.cobanvideospath, ('largefile'+args.extension)))
+    df = DiskFill(1, os.path.join(args.cobanvideospath, ('largefile'+args.extension)), args.splitfile)
 
     while dfwrapper.get_available_space(args.pendrivefilesystem, args.mount) > args.threshold:
         df.diskfill()

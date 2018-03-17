@@ -9,15 +9,20 @@ logger = logging.getLogger('main.diskfill')
 class DiskFill:
     thousandKB = 1000000  # bytes
 
-    def __init__(self, sizeinGB, filename):
+    def __init__(self, sizeinGB, filename, splitfile=False):
         self.sizeinGB = sizeinGB
         self.count = 0
-        self.filename = filename
+        # self.filename = filename
+        self.file, self.filext = os.path.splitext(filename)
+        self.splitfile = splitfile
 
     def diskfill(self):
-        logger.info("writing to disk - size:{0}GB, filename:{1}".format(self.sizeinGB, self.filename))
+        logger.info("writing to disk - size:{0}GB, filename:{1}".format(self.sizeinGB, self.file+self.filext))
         counter = 1
-        with open(self.filename, 'ab') as fout:
+        dfile = self.file+self.filext
+        if self.splitfile and (self.count > 0):
+            dfile = self.file+str(self.count)+self.filext
+        with open(dfile, 'ab') as fout:
             while counter < (self.sizeinGB * 1000):
                 fout.write(os.urandom(self.thousandKB))
                 counter = counter + 1
@@ -38,4 +43,6 @@ if __name__ == '__main__':
     GBtowrite = args.size
     file = args.file
 
-    diskfill(GBtowrite, file)
+    df = DiskFill(GBtowrite, file)
+    df.diskfill()
+    df.getsizewritten()
