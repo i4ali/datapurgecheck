@@ -39,8 +39,17 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc', 'sphinxcontrib.confluencebuilder'
 ]
+
+confluence_publish = True
+confluence_space_name = 'CSQA'
+# (for confluence cloud)
+confluence_server_url = 'https://safefleet.atlassian.net/wiki'
+confluence_server_user = 'imrana@cobantech.com'
+confluence_server_pass = 'C5jLLmzupNfvQXhCcWWXE58A'
+confluence_parent_page = 'Tools and Test Software'
+confluence_purge = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

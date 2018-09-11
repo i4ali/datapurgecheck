@@ -8,4 +8,6 @@ dist
 _build
 _static_
 _templates
+docs/build
+.vscode/
 

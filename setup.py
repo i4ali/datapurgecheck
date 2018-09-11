@@ -7,7 +7,7 @@ cmdclass = {'build_sphinx': BuildDoc}
 
 name = 'datapurgecheck'
 version = '0.3'
-release = '0.3.0'
+release = '0.3.1'
 setup(name=name,
       version=release,
       description='Data Purge Checking/Validation Utility',
@@ -23,6 +23,7 @@ setup(name=name,
         'build_sphinx': {
             'project': ('setup.py', name),
             'version': ('setup.py', version),
-            'release': ('setup.py', release)}},
+            'release': ('setup.py', release),
+            'source_dir': ('setup.py', 'docs')}},
       )
 
